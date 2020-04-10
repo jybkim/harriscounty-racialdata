@@ -6,9 +6,11 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 
 library(tidycensus)
+library(dplyr)
+library(ggplot2)
 
 census_api_key("9f9584127dd506cdaf80bdb78927e9c01c12f2b8")
 
@@ -17,47 +19,14 @@ census_api_key("9f9584127dd506cdaf80bdb78927e9c01c12f2b8")
 ```
 
 
-```{r cars}
 
-library(tidyverse)
-
-pop <- get_decennial(geography = "state",
-                     variables = "P001001",
-                     year = 2010)
-glimpse(pop)
-
-
-rural <- get_decennial(geography = "state",
-                       variables = c("P001001", "P002005"),
-                       year = 2010,
-                       output = "wide")
-
-rural <- rural %>%
-  rename(state = NAME) %>%
-  mutate(prop_rural = P002005/P001001,
-         state = reorder(state, prop_rural))
-
-glimpse(rural)
-
-
-rural %>%
-  ggplot(aes(x = prop_rural, y = state)) +
-  geom_point() +
-  ylab("") +
-  xlab("Rural Population Proportion")
-
-
-
-```
-
-## Including Plots
-
-```{r cars}
+```{r, include = FALSE}
 
 racevars <- c(White = "B02001_002", 
               Black = "B02001_003", 
               Asian = "B02001_005",
               Hispanic = "B03003_003")
+
 harris <- get_acs(geography = "tract",
                   variables = racevars, 
                   year = 2018,
@@ -66,18 +35,25 @@ harris <- get_acs(geography = "tract",
                   geometry = TRUE,
                   summary_var = "B02001_001") 
 
-harris %>%
-  mutate(Percent = 100 * (estimate / summary_est)) %>%
-  ggplot(aes(fill = Percent, color = Percent)) +
+harris <- harris %>%
+  mutate(Percent = 100 * (estimate / summary_est))
+
+
+harrisplot <- ggplot(harris, aes(fill = Percent, color = Percent)) +
   facet_wrap(~ variable) +
   geom_sf() +
   scale_fill_viridis_c(direction = -1) +
   scale_color_viridis_c(direction = -1) +
-  labs(title = "Racial geography of Harris County, Texas",
+  labs(title = "Racial Geography of Harris County, Texas",
        caption = "Source: American Community Survey 2014-2018") +
   theme_void()
 
 
 
+```
+
+```{r, echo = FALSE}
+
+harrisplot
 
 ```
